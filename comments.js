@@ -1,75 +1,76 @@
-//create web server
-//create web server
-var http = require('http');
-var fs = require('fs');
-var url = require('url');
-var qs = require('querystring');
-var path = require('path');
-var sanitizeHtml = require('sanitize-html');
-var template = require('./lib/template.js');
-var db = require('./lib/db.js');
-var shortid = require('shortid');
-var cookie = require('cookie');
-var auth = require('./lib/auth.js');
-
-//auth
-var passport = require('passport')
-  , LocalStrategy = require('passport-local').Strategy;
-
-//passport strategy
-passport.use(new LocalStrategy(
-  function(username, password, done) {
-    var user = auth.users[0];
-    if(username === user.username){
-      if(password === user.password){
-        return done(null, user);
-      } else {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-    } else {
-      return done(null, false, { message: 'Incorrect username.' });
-    }
-  }
-));
-//serialize and deserialize
-passport.serializeUser(function(user, done) {
-  done(null, user.username);
-});
-
-passport.deserializeUser(function(id, done) {
-  var user = auth.users[0];
-  done(null, user);
-});
-
-//create app
-var app = http.createServer(function(request,response){
-    var _url = request.url;
-    var queryData = url.parse(_url, true).query;
-    var pathname = url.parse(_url,true).pathname;
-    var title = queryData.id;
-    var cookies = {};
-    if(request.headers.cookie !== undefined){
-      cookies = cookie.parse(request.headers.cookie);
-    }
-    if(pathname === '/login'){
-      var description = `
-        <form action="login_process" method="post">
-          <p><input type="text" name="username" placeholder="username"></p>
-          <p><input type="password" name="password" placeholder="password"></p>
-          <p><input type="submit"></p>
-        </form>
-      `;
-      var list = template.list(request.list);
-      var html = template.HTML(title, list,
-        `
-        <h2>${title}</h2>
-        <p>${description}</p>
-        `,
-        ''
-      );
-      response.writeHead(200);
-      response.end(html);
-    } else if(pathname === '/login_process'){
-      var body = '';
-      request.on('data',function(data){
-        body +=
+//// Create web server
+//var http = require('http');
+//var fs = require('fs');
+//var path = require('path');
+//var mime = require('mime');
+//var cache = {};
+//
+//function send404(response) {
+//    response.writeHead(404, {'Content-Type': 'text/plain'});
+//    response.write('Error 404: resource not found.');
+//    response.end();
+//}
+//
+//function sendFile(response, filePath, fileContents) {
+//    response.writeHead(
+//        200,
+//        {"content-type": mime.lookup(path.basename(filePath))}
+//    );
+//    response.end(fileContents);
+//}
+//
+//function serveStatic(response, cache, absPath) {
+//    if (cache[absPath]) {
+//        sendFile(response, absPath, cache[absPath]);
+//    } else {
+//        fs.exists(absPath, function (exists) {
+//            if (exists) {
+//                fs.readFile(absPath, function (err, data) {
+//                    if (err) {
+//                        send404(response);
+//                    } else {
+//                        cache[absPath] = data;
+//                        sendFile(response, absPath, data);
+//                    }
+//                });
+//            } else {
+//                send404(response);
+//            }
+//        });
+//    }
+//}
+//
+//var server = http.createServer(function (request, response) {
+//    var filePath = false;
+//
+//    if (request.url == '/') {
+//        filePath = 'public/index.html';
+//    } else {
+//        filePath = 'public' + request.url;
+//    }
+//
+//    var absPath = './' + filePath;
+//    serveStatic(response, cache, absPath);
+//});
+//
+//server.listen(3000, function () {
+//    console.log("Server listening on port 3000.");
+//});
+//
+//// Load Socket.IO
+//var chatServer = require('./lib/chat_server');
+//chatServer.listen(server);
+//
+//// Path: lib/chat_server.js
+//var socketio = require('socket.io');
+//var io;
+//var guestNumber = 1;
+//var nickNames = {};
+//var namesUsed = [];
+//var currentRoom = {};
+//
+//exports.listen = function (server) {
+//    io = socketio.listen(server);
+//    io.set('log level', 1);
+//    io.sockets.on('connection', function (socket) {
+//        guestNumber = assignGuest
